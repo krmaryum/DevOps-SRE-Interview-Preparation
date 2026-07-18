@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Docker Interview Health Web</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #07111f; color: #eef6ff; }
+    main { width: min(680px, calc(100% - 40px)); padding: 40px; border: 1px solid #29405f; border-radius: 20px; background: #101e31; box-shadow: 0 20px 60px #0007; }
+    p { color: #a9bad0; line-height: 1.6; }
+    .status { display: inline-block; padding: 8px 14px; border-radius: 999px; background: #123d35; color: #5eead4; font-weight: 800; }
+    code { color: #7dd3fc; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="status">Container Healthy</span>
+    <h1>Docker Interview Health Web</h1>
+    <p>This Nginx website runs as a non-root container on port <code>8080</code> with a read-only filesystem and a Docker health check.</p>
+    <p>Health endpoint: <code>/health</code></p>
+  </main>
+</body>
+</html>
+

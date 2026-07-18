@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question networking interview quiz with timer, scoring, shuffled choices, and explanations.">
+  <title>Docker Interview Preparation — MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #9eb0c8;
+      --accent: #4fd1c5;
+      --accent-2: #60a5fa;
+      --success: #34d399;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29405f;
+      --shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 13%), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+
+    .container {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 94%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.12; }
+    .hero p { max-width: 760px; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .stat span { display: block; color: var(--muted); font-size: .78rem; }
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #081322;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label { color: var(--muted); font-size: .82rem; margin-top: 5px; }
+    .timer { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+    .question-card { padding: 22px; margin-bottom: 16px; }
+    .question-card h2 { margin: 0 0 16px; font-size: 1.05rem; }
+    .question-number { color: var(--accent); margin-right: 6px; }
+
+    .options { display: grid; gap: 10px; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover { transform: translateY(-1px); border-color: var(--accent-2); }
+    .option:has(input:checked) { background: #12334b; border-color: var(--accent); }
+    .option.correct { background: rgb(16 90 68 / 45%); border-color: var(--success); }
+    .option.incorrect { background: rgb(120 28 52 / 40%); border-color: var(--danger); }
+    .option input { margin-top: 4px; accent-color: var(--accent); }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #0a1728;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary { color: #03131d; background: linear-gradient(135deg, var(--accent), #7dd3fc); }
+    .secondary { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .result-card { display: none; padding: 26px; margin: 20px 0; text-align: center; }
+    .result-card.show { display: block; }
+    .score { font-size: clamp(2.4rem, 8vw, 4.8rem); font-weight: 950; color: var(--accent); }
+    .result-message { color: var(--muted); }
+    .warning { color: var(--warning); font-weight: 750; }
+
+    footer { text-align: center; color: var(--muted); padding-top: 24px; }
+    footer a { color: var(--accent); }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Package 04 · Docker</p>
+      <h1>Docker Interview Preparation Quiz</h1>
+      <p>Test Docker architecture, images, Dockerfiles, runtime operations, networking, storage, Compose, security, reliability, and troubleshooting. Questions and answer choices are shuffled on every attempt.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+    </section>
+
+    <footer>
+      <p>Prepared for Muhammad Khalid Khan · <a href="https://github.com/krmaryum">GitHub: krmaryum</a></p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData =     [
+          {
+                "q": "What is the most accurate difference between an image and a container?",
+                "options": [
+                      "An image is an immutable template; a container is its runtime instance",
+                      "An image always runs while a container is stored",
+                      "A container is a virtual machine image",
+                      "There is no lifecycle difference"
+                ],
+                "answer": "An image is an immutable template; a container is its runtime instance",
+                "explanation": "Images contain immutable layers and metadata; containers add runtime configuration and a writable layer."
+          },
+          {
+                "q": "Which Linux mechanism primarily limits container CPU and memory?",
+                "options": [
+                      "Cgroups",
+                      "DNS",
+                      "ARP",
+                      "OverlayFS only"
+                ],
+                "answer": "Cgroups",
+                "explanation": "Control groups account for and constrain resources such as CPU and memory."
+          },
+          {
+                "q": "What do Linux namespaces provide to containers?",
+                "options": [
+                      "Isolated views of system resources",
+                      "Automatic image vulnerability fixes",
+                      "Permanent data backups",
+                      "Registry authentication"
+                ],
+                "answer": "Isolated views of system resources",
+                "explanation": "Namespaces isolate resources including processes, networking, mounts, IPC, hostname, and users."
+          },
+          {
+                "q": "Why is an image digest useful for deployment?",
+                "options": [
+                      "It identifies exact image content",
+                      "It automatically encrypts secrets",
+                      "It publishes all ports",
+                      "It makes the image writable"
+                ],
+                "answer": "It identifies exact image content",
+                "explanation": "Tags can move, but a digest is content-addressed and selects specific image content."
+          },
+          {
+                "q": "What is Docker build context?",
+                "options": [
+                      "The files made available to the builder",
+                      "Only the final image layer",
+                      "The running container network",
+                      "A registry login session"
+                ],
+                "answer": "The files made available to the builder",
+                "explanation": "COPY and other build inputs are resolved from the selected context, subject to .dockerignore."
+          },
+          {
+                "q": "What is a primary purpose of .dockerignore?",
+                "options": [
+                      "Exclude unnecessary or sensitive build-context files",
+                      "Restart unhealthy containers",
+                      "Create a named volume",
+                      "Assign container IP addresses"
+                ],
+                "answer": "Exclude unnecessary or sensitive build-context files",
+                "explanation": "A small, controlled context improves builds and reduces accidental inclusion of files."
+          },
+          {
+                "q": "What usually happens after an early Dockerfile layer changes?",
+                "options": [
+                      "Dependent later layers must rebuild",
+                      "All later layers always remain cached",
+                      "The registry deletes the image",
+                      "Running containers automatically update"
+                ],
+                "answer": "Dependent later layers must rebuild",
+                "explanation": "Cache invalidation flows to instructions that depend on the changed layer."
+          },
+          {
+                "q": "What is the main benefit of a multi-stage build?",
+                "options": [
+                      "Build tools can be excluded from the runtime image",
+                      "It gives containers separate kernels",
+                      "It publishes ports automatically",
+                      "It makes tags immutable"
+                ],
+                "answer": "Build tools can be excluded from the runtime image",
+                "explanation": "Artifacts are built in one stage and copied into a smaller, cleaner runtime stage."
+          },
+          {
+                "q": "Why is exec-form CMD or ENTRYPOINT often preferred?",
+                "options": [
+                      "The program receives signals directly without an implicit shell",
+                      "It automatically adds a health check",
+                      "It bypasses all filesystem permissions",
+                      "It provides a volume backup"
+                ],
+                "answer": "The program receives signals directly without an implicit shell",
+                "explanation": "Exec form improves argument predictability and signal handling for the main process."
+          },
+          {
+                "q": "What happens when the container main process exits?",
+                "options": [
+                      "The container stops with that process exit status",
+                      "Docker starts a new VM",
+                      "The image is deleted",
+                      "The volume is always removed"
+                ],
+                "answer": "The container stops with that process exit status",
+                "explanation": "The container lifecycle is tied to its PID 1 process."
+          },
+          {
+                "q": "How does docker stop normally terminate a container?",
+                "options": [
+                      "Sends a graceful stop signal, waits, then uses SIGKILL if needed",
+                      "Deletes the image immediately",
+                      "Only pauses CPU scheduling",
+                      "Removes every attached volume"
+                ],
+                "answer": "Sends a graceful stop signal, waits, then uses SIGKILL if needed",
+                "explanation": "Docker normally sends SIGTERM, waits for the timeout, then forces termination."
+          },
+          {
+                "q": "What does EXPOSE 8080 in a Dockerfile do?",
+                "options": [
+                      "Documents an intended container port",
+                      "Publishes host port 8080 automatically",
+                      "Opens every host firewall",
+                      "Creates a reverse proxy"
+                ],
+                "answer": "Documents an intended container port",
+                "explanation": "EXPOSE is metadata; runtime port publishing is configured separately."
+          },
+          {
+                "q": "What does -p 127.0.0.1:8080:80 mean?",
+                "options": [
+                      "Forward host loopback port 8080 to container port 80",
+                      "Forward container port 8080 to host port 80 on every interface",
+                      "Expose UDP only",
+                      "Connect two Docker networks"
+                ],
+                "answer": "Forward host loopback port 8080 to container port 80",
+                "explanation": "The mapping is host IP, host port, then container port."
+          },
+          {
+                "q": "Why should one container not use localhost to reach another?",
+                "options": [
+                      "Localhost refers to the calling container itself",
+                      "Docker blocks all localhost traffic",
+                      "Localhost always points to the host",
+                      "DNS cannot work in containers"
+                ],
+                "answer": "Localhost refers to the calling container itself",
+                "explanation": "Each container has its own network namespace; use a service name on a shared network."
+          },
+          {
+                "q": "Which feature is provided by a user-defined bridge network?",
+                "options": [
+                      "Automatic DNS discovery by container or service name",
+                      "A separate Linux kernel per container",
+                      "Automatic public TLS certificates",
+                      "Permanent image storage"
+                ],
+                "answer": "Automatic DNS discovery by container or service name",
+                "explanation": "User-defined bridge networks provide scoped connectivity and embedded DNS-based discovery."
+          },
+          {
+                "q": "Which storage is usually best for Docker-managed persistent application data?",
+                "options": [
+                      "A named volume",
+                      "The container writable layer",
+                      "A tmpfs mount",
+                      "An image tag"
+                ],
+                "answer": "A named volume",
+                "explanation": "Named volumes persist independently of container replacement and are managed by Docker."
+          },
+          {
+                "q": "Which statement about a Docker volume is correct?",
+                "options": [
+                      "It provides persistence but is not itself a backup",
+                      "It is deleted whenever any container stops",
+                      "It always resides in RAM",
+                      "It guarantees application-consistent recovery"
+                ],
+                "answer": "It provides persistence but is not itself a backup",
+                "explanation": "Volumes still require consistent, tested backup and restore procedures."
+          },
+          {
+                "q": "A container exits with code 137 and OOMKilled=true. What is most likely?",
+                "options": [
+                      "It exceeded available or limited memory and was killed",
+                      "Its DNS name expired",
+                      "Its image digest changed",
+                      "Its port was already exposed"
+                ],
+                "answer": "It exceeded available or limited memory and was killed",
+                "explanation": "Exit 137 commonly reflects SIGKILL; the OOM flag confirms memory-pressure termination."
+          },
+          {
+                "q": "What does a Docker health check determine?",
+                "options": [
+                      "Whether a configured probe succeeds over time",
+                      "Whether an image has no vulnerabilities",
+                      "Whether all dependencies will remain available",
+                      "Whether the host has backups"
+                ],
+                "answer": "Whether a configured probe succeeds over time",
+                "explanation": "It records starting, healthy, or unhealthy based on probe results and timing."
+          },
+          {
+                "q": "Does plain Docker automatically restart a live but unhealthy container?",
+                "options": [
+                      "No, health and process restart are separate behaviors",
+                      "Yes, every failed probe forces replacement",
+                      "Yes, but only without a restart policy",
+                      "No, because Docker has no health checks"
+                ],
+                "answer": "No, health and process restart are separate behaviors",
+                "explanation": "Restart policies respond to process exit; unhealthy state alone does not restart it in plain Docker."
+          },
+          {
+                "q": "Why run a container as a non-root user?",
+                "options": [
+                      "To reduce the impact of compromise and accidental privileged actions",
+                      "To make every host file writable",
+                      "To disable cgroups",
+                      "To permit privileged mode safely"
+                ],
+                "answer": "To reduce the impact of compromise and accidental privileged actions",
+                "explanation": "Non-root execution is an important least-privilege control, though it is not sufficient alone."
+          },
+          {
+                "q": "Where should a production secret NOT be stored?",
+                "options": [
+                      "In an image layer or Dockerfile ENV instruction",
+                      "In an approved runtime secret mechanism",
+                      "In a restricted secret manager",
+                      "In a narrowly mounted secret file"
+                ],
+                "answer": "In an image layer or Dockerfile ENV instruction",
+                "explanation": "Image layers and metadata persist and may be widely accessible; inject secrets securely at runtime."
+          },
+          {
+                "q": "What does privileged mode imply?",
+                "options": [
+                      "Broad host device and kernel access with weakened isolation",
+                      "A read-only filesystem",
+                      "Only one extra network port",
+                      "Automatic image signature verification"
+                ],
+                "answer": "Broad host device and kernel access with weakened isolation",
+                "explanation": "Privileged containers carry substantial host risk; grant only specific required access instead."
+          },
+          {
+                "q": "Why can Compose start order still produce dependency failures?",
+                "options": [
+                      "A started container may not yet be ready to serve",
+                      "Compose cannot create networks",
+                      "Images cannot contain health checks",
+                      "Service names never resolve"
+                ],
+                "answer": "A started container may not yet be ready to serve",
+                "explanation": "Use meaningful health-based readiness plus resilient client retries; start order is not readiness."
+          },
+          {
+                "q": "What is the safest first response to unexplained Docker disk growth?",
+                "options": [
+                      "Inspect ownership and usage with docker system df -v before cleanup",
+                      "Run an indiscriminate prune immediately",
+                      "Delete /var/lib/docker manually",
+                      "Disable all logs permanently"
+                ],
+                "answer": "Inspect ownership and usage with docker system df -v before cleanup",
+                "explanation": "Preserve evidence and identify images, cache, containers, volumes, and logs before targeted cleanup."
+          }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      resultCard.classList.remove("show");
+      submitButton.disabled = false;
+      statusLabel.textContent = "In progress";
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = question.explanation;
+
+        card.append(heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) label.classList.add("correct");
+          if (selected && option === selected.value && selected.value !== question.answer) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        if (selected && selected.value === question.answer) correct += 1;
+        card.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+
+      if (percentage >= 90) {
+        resultMessage.textContent = "Excellent — interview-ready performance. Maintain practice with scenarios and project explanations.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent = "Passed — review missed explanations and repeat the related hands-on labs.";
+      } else if (percentage >= 70) {
+        resultMessage.textContent = "Developing — revisit weak topics, complete the associated labs, and reattempt.";
+      } else {
+        resultMessage.textContent = "Foundation review required — study the notes, practice commands, and try again.";
+      }
+
+      submitButton.disabled = true;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reattemptButton.addEventListener("click", createAttempt);
+    createAttempt();
+  </script>
+</body>
+</html>
