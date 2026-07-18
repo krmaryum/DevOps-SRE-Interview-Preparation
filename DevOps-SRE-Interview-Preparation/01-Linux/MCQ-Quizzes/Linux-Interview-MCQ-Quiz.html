@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive 25-question Linux interview preparation quiz with timer, scoring, shuffled choices, and explanations.">
+  <title>Linux Interview Preparation — MCQ Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e31;
+      --panel-2: #162740;
+      --text: #ecf4ff;
+      --muted: #9eb0c8;
+      --accent: #4fd1c5;
+      --accent-2: #60a5fa;
+      --success: #34d399;
+      --danger: #fb7185;
+      --warning: #fbbf24;
+      --border: #29405f;
+      --shadow: 0 18px 50px rgb(0 0 0 / 28%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgb(37 99 235 / 18%), transparent 32rem),
+        radial-gradient(circle at top left, rgb(20 184 166 / 13%), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+
+    .container {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero, .toolbar, .question-card, .result-card {
+      background: rgb(16 30 49 / 94%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero { padding: 30px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.12; }
+    .hero p { max-width: 760px; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 13px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+
+    .stat span { display: block; color: var(--muted); font-size: .78rem; }
+    .stat strong { font-size: 1.15rem; }
+
+    .toolbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      margin: 18px 0;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #081322;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease;
+    }
+
+    .toolbar-label { color: var(--muted); font-size: .82rem; margin-top: 5px; }
+    .timer { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+    .question-card { padding: 22px; margin-bottom: 16px; }
+    .question-card h2 { margin: 0 0 16px; font-size: 1.05rem; }
+    .question-number { color: var(--accent); margin-right: 6px; }
+
+    .options { display: grid; gap: 10px; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 11px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: #0b1829;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .option:hover { transform: translateY(-1px); border-color: var(--accent-2); }
+    .option:has(input:checked) { background: #12334b; border-color: var(--accent); }
+    .option.correct { background: rgb(16 90 68 / 45%); border-color: var(--success); }
+    .option.incorrect { background: rgb(120 28 52 / 40%); border-color: var(--danger); }
+    .option input { margin-top: 4px; accent-color: var(--accent); }
+
+    .explanation {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--accent-2);
+      border-radius: 8px;
+      background: #0a1728;
+      color: var(--muted);
+    }
+
+    .explanation.show { display: block; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px 0;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .primary { color: #03131d; background: linear-gradient(135deg, var(--accent), #7dd3fc); }
+    .secondary { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+
+    .result-card { display: none; padding: 26px; margin: 20px 0; text-align: center; }
+    .result-card.show { display: block; }
+    .score { font-size: clamp(2.4rem, 8vw, 4.8rem); font-weight: 950; color: var(--accent); }
+    .result-message { color: var(--muted); }
+    .warning { color: var(--warning); font-weight: 750; }
+
+    footer { text-align: center; color: var(--muted); padding-top: 24px; }
+    footer a { color: var(--accent); }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { grid-template-columns: 1fr auto; }
+      .toolbar > div:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <p class="eyebrow">Package 01 · Linux</p>
+      <h1>Linux Interview Preparation Quiz</h1>
+      <p>Test Linux architecture, permissions, processes, systemd, performance, storage, SSH, networking, scheduling, and troubleshooting. Questions and answer choices are shuffled on every attempt.</p>
+      <div class="stats">
+        <div class="stat"><span>Questions</span><strong>25</strong></div>
+        <div class="stat"><span>Time limit</span><strong>25 min</strong></div>
+        <div class="stat"><span>Passing score</span><strong>80%</strong></div>
+        <div class="stat"><span>Explanations</span><strong>Included</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Quiz status">
+      <div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="toolbar-label" id="progressLabel">0 of 25 answered</div>
+      </div>
+      <div>Time: <span class="timer" id="timer">25:00</span></div>
+      <div id="statusLabel">In progress</div>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="actions">
+      <button class="button primary" id="submitButton" type="button">Submit Quiz</button>
+      <button class="button secondary" id="reattemptButton" type="button">Reattempt</button>
+    </div>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <p class="eyebrow">Your Result</p>
+      <div class="score" id="scoreText">0%</div>
+      <h2 id="scoreDetail"></h2>
+      <p class="result-message" id="resultMessage"></p>
+    </section>
+
+    <footer>
+      <p>Prepared for Muhammad Khalid Khan · <a href="https://github.com/krmaryum">GitHub: krmaryum</a></p>
+    </footer>
+  </main>
+
+  <script>
+    const quizData = [
+      {
+        q: "Which component directly manages CPU scheduling, memory, devices, and filesystems?",
+        options: ["Linux kernel", "Bash shell", "Terminal emulator", "GRUB menu"],
+        answer: "Linux kernel",
+        explanation: "The kernel manages hardware and core system resources. A shell interprets commands, while a terminal provides the interaction interface."
+      },
+      {
+        q: "Which sequence best represents a common Linux boot flow?",
+        options: ["UEFI → GRUB → kernel/initramfs → systemd → services", "systemd → kernel → GRUB → UEFI", "GRUB → UEFI → services → kernel", "Kernel → BIOS → shell → GRUB"],
+        answer: "UEFI → GRUB → kernel/initramfs → systemd → services",
+        explanation: "Firmware initializes the system, GRUB loads the kernel and initramfs, and systemd normally starts services as PID 1."
+      },
+      {
+        q: "What is the main effect of SGID on a directory?",
+        options: ["New entries inherit the directory group", "Only root can enter it", "New files become executable", "Users cannot delete their own files"],
+        answer: "New entries inherit the directory group",
+        explanation: "SGID on a directory makes newly created entries inherit the directory's group, which is useful for collaborative directories."
+      },
+      {
+        q: "What does permission mode 750 grant?",
+        options: ["Owner rwx, group r-x, others ---", "Owner rw-, group r-x, others ---", "Owner rwx, group rwx, others ---", "Owner r-x, group r-x, others ---"],
+        answer: "Owner rwx, group r-x, others ---",
+        explanation: "7 is read+write+execute, 5 is read+execute, and 0 grants no permissions."
+      },
+      {
+        q: "Which process state commonly represents uninterruptible I/O sleep?",
+        options: ["D", "R", "S", "Z"],
+        answer: "D",
+        explanation: "D state commonly indicates uninterruptible sleep while waiting for I/O. Many D-state tasks can increase load even when CPU is idle."
+      },
+      {
+        q: "Why should SIGTERM normally be attempted before SIGKILL?",
+        options: ["It allows graceful cleanup", "It always works faster", "It increases process priority", "It restarts the process automatically"],
+        answer: "It allows graceful cleanup",
+        explanation: "SIGTERM can be handled by the process, allowing cleanup of files, locks, connections, and transactions. SIGKILL cannot be handled."
+      },
+      {
+        q: "What does systemctl enable configure?",
+        options: ["Automatic start at the appropriate boot target", "Immediate process termination", "A one-time service start only", "Kernel module loading only"],
+        answer: "Automatic start at the appropriate boot target",
+        explanation: "Enable configures boot-time activation. Starting controls the current runtime state."
+      },
+      {
+        q: "Which command is most directly useful for logs from one systemd service?",
+        options: ["journalctl -u nginx", "df -hT", "ip route", "lsblk -f"],
+        answer: "journalctl -u nginx",
+        explanation: "The -u option filters journal entries by systemd unit."
+      },
+      {
+        q: "Linux load average primarily includes which tasks?",
+        options: ["Runnable tasks and tasks in uninterruptible sleep", "Only processes using 100% CPU", "Only zombie processes", "Only network connections"],
+        answer: "Runnable tasks and tasks in uninterruptible sleep",
+        explanation: "Linux load includes tasks running/waiting for CPU plus tasks in uninterruptible sleep."
+      },
+      {
+        q: "High load, mostly idle CPU, and many D-state tasks most strongly suggest investigating what?",
+        options: ["I/O or an external storage dependency", "User password expiration", "Shell aliases", "File ownership only"],
+        answer: "I/O or an external storage dependency",
+        explanation: "Blocked I/O tasks can raise load without consuming much CPU. Disk, NFS, and similar dependencies should be inspected."
+      },
+      {
+        q: "Which memory value is generally more useful than completely free RAM when assessing capacity?",
+        options: ["Available memory", "VSZ of one process", "Cached pages alone", "Swap total only"],
+        answer: "Available memory",
+        explanation: "Available memory estimates capacity usable without heavy swapping and includes reclaimable cache."
+      },
+      {
+        q: "Which evidence confirms that the OOM killer terminated a process?",
+        options: ["Kernel journal messages", "Shell history only", "The hosts file", "GRUB configuration"],
+        answer: "Kernel journal messages",
+        explanation: "Kernel logs commonly record out-of-memory conditions and the selected killed process."
+      },
+      {
+        q: "Which command checks inode utilization?",
+        options: ["df -i", "du -h", "free -h", "ss -s"],
+        answer: "df -i",
+        explanation: "df -i reports inode usage. A filesystem can have free blocks but no free inodes."
+      },
+      {
+        q: "df shows much more usage than du. Which command should you try next?",
+        options: ["lsof +L1", "uname -r", "whoami", "systemctl get-default"],
+        answer: "lsof +L1",
+        explanation: "Deleted files still held open by processes remain allocated but are no longer visible to du."
+      },
+      {
+        q: "Which metric describes the time required to complete an I/O request?",
+        options: ["Latency", "Throughput", "Capacity", "Inode count"],
+        answer: "Latency",
+        explanation: "Latency measures request completion time, while throughput measures data transfer and IOPS measures operation count."
+      },
+      {
+        q: "Which LVM order is correct?",
+        options: ["PV → VG → LV → filesystem", "LV → PV → VG → filesystem", "Filesystem → VG → PV → LV", "VG → filesystem → PV → LV"],
+        answer: "PV → VG → LV → filesystem",
+        explanation: "Physical volumes feed volume groups, which allocate logical volumes. Filesystems are then created on logical volumes."
+      },
+      {
+        q: "Why are filesystem UUIDs commonly used in /etc/fstab?",
+        options: ["They remain stable if device names change", "They encrypt the filesystem", "They automatically create backups", "They increase disk speed"],
+        answer: "They remain stable if device names change",
+        explanation: "UUIDs identify the filesystem itself and are more reliable than device names that can change."
+      },
+      {
+        q: "Which command should validate /etc/fstab entries before a reboot?",
+        options: ["mount -a", "kill -9 1", "chmod 777 /etc/fstab", "rm /etc/fstab"],
+        answer: "mount -a",
+        explanation: "mount -a attempts configured mounts and reveals errors before reboot."
+      },
+      {
+        q: "Which command displays NFS exports offered by a server?",
+        options: ["showmount -e server", "swapon --show", "crontab -l", "sshd -t"],
+        answer: "showmount -e server",
+        explanation: "showmount -e requests the server's exported filesystem list."
+      },
+      {
+        q: "Why can a command work in an interactive shell but fail through cron?",
+        options: ["Cron uses a limited environment and may use another user or directory", "Cron always disables scripts", "Cron cannot redirect output", "Cron requires Docker"],
+        answer: "Cron uses a limited environment and may use another user or directory",
+        explanation: "PATH, environment, user, shell, working directory, permissions, and credentials can differ under cron."
+      },
+      {
+        q: "What should be done before restarting SSH after a configuration change?",
+        options: ["Validate with sshd -t and keep the current session open", "Delete authorized_keys", "Close every active session", "Disable logging"],
+        answer: "Validate with sshd -t and keep the current session open",
+        explanation: "Configuration validation and a retained working session reduce the chance of remote lockout."
+      },
+      {
+        q: "A service listens on 127.0.0.1:8080. What does this usually mean?",
+        options: ["Only local clients can connect directly", "All IPv4 interfaces accept connections", "The service is stopped", "DNS is automatically disabled"],
+        answer: "Only local clients can connect directly",
+        explanation: "The loopback address is local to the host. Remote access requires an appropriate external bind address or proxy."
+      },
+      {
+        q: "The server works by IP but not by hostname. Which layer should be checked first?",
+        options: ["DNS resolution", "LVM allocation", "Process niceness", "File ACL mask"],
+        answer: "DNS resolution",
+        explanation: "Successful IP connectivity with failed name access points first toward resolver configuration or DNS records."
+      },
+      {
+        q: "What is the best first response to a vague report that a server is slow?",
+        options: ["Clarify scope, timeline, impact, and recent changes", "Immediately reboot", "Delete logs", "Increase every resource"],
+        answer: "Clarify scope, timeline, impact, and recent changes",
+        explanation: "A useful investigation begins by defining the symptom and collecting evidence before disruptive action."
+      },
+      {
+        q: "What should follow technical recovery from an incident?",
+        options: ["Validate user impact and implement prevention", "Erase all evidence", "Close the incident without documentation", "Disable monitoring"],
+        answer: "Validate user impact and implement prevention",
+        explanation: "Recovery must be verified, and root-cause learning should produce specific monitoring, automation, capacity, or design improvements."
+      }
+    ];
+
+    const state = {
+      questions: [],
+      secondsRemaining: 25 * 60,
+      timerId: null,
+      submitted: false
+    };
+
+    const quizForm = document.getElementById("quizForm");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const timerElement = document.getElementById("timer");
+    const statusLabel = document.getElementById("statusLabel");
+    const submitButton = document.getElementById("submitButton");
+    const reattemptButton = document.getElementById("reattemptButton");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const scoreDetail = document.getElementById("scoreDetail");
+    const resultMessage = document.getElementById("resultMessage");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+
+    function createAttempt() {
+      clearInterval(state.timerId);
+      state.questions = shuffle(quizData).map((question) => ({
+        ...question,
+        options: shuffle(question.options)
+      }));
+      state.secondsRemaining = 25 * 60;
+      state.submitted = false;
+      resultCard.classList.remove("show");
+      submitButton.disabled = false;
+      statusLabel.textContent = "In progress";
+      renderQuestions();
+      updateProgress();
+      updateTimer();
+      state.timerId = setInterval(tick, 1000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderQuestions() {
+      quizForm.innerHTML = "";
+      state.questions.forEach((question, questionIndex) => {
+        const card = document.createElement("section");
+        card.className = "question-card";
+        card.dataset.questionIndex = questionIndex;
+
+        const heading = document.createElement("h2");
+        const number = document.createElement("span");
+        number.className = "question-number";
+        number.textContent = `${questionIndex + 1}.`;
+        heading.append(number, document.createTextNode(` ${question.q}`));
+
+        const options = document.createElement("div");
+        options.className = "options";
+
+        question.options.forEach((optionText, optionIndex) => {
+          const label = document.createElement("label");
+          label.className = "option";
+          label.dataset.option = optionText;
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `question-${questionIndex}`;
+          input.value = optionText;
+          input.id = `question-${questionIndex}-option-${optionIndex}`;
+          input.addEventListener("change", updateProgress);
+
+          const text = document.createElement("span");
+          text.textContent = optionText;
+          label.append(input, text);
+          options.append(label);
+        });
+
+        const explanation = document.createElement("div");
+        explanation.className = "explanation";
+        explanation.textContent = question.explanation;
+
+        card.append(heading, options, explanation);
+        quizForm.append(card);
+      });
+    }
+
+    function updateProgress() {
+      const answered = quizForm.querySelectorAll('input[type="radio"]:checked').length;
+      const percentage = (answered / state.questions.length) * 100;
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${answered} of ${state.questions.length} answered`;
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(state.secondsRemaining / 60);
+      const seconds = state.secondsRemaining % 60;
+      timerElement.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      timerElement.classList.toggle("warning", state.secondsRemaining <= 300);
+    }
+
+    function tick() {
+      state.secondsRemaining -= 1;
+      updateTimer();
+      if (state.secondsRemaining <= 0) {
+        clearInterval(state.timerId);
+        submitQuiz(true);
+      }
+    }
+
+    function submitQuiz(autoSubmitted = false) {
+      if (state.submitted) return;
+      state.submitted = true;
+      clearInterval(state.timerId);
+
+      let correct = 0;
+      state.questions.forEach((question, questionIndex) => {
+        const card = quizForm.querySelector(`[data-question-index="${questionIndex}"]`);
+        const selected = card.querySelector('input[type="radio"]:checked');
+        const labels = card.querySelectorAll(".option");
+
+        labels.forEach((label) => {
+          const option = label.dataset.option;
+          if (option === question.answer) label.classList.add("correct");
+          if (selected && option === selected.value && selected.value !== question.answer) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        if (selected && selected.value === question.answer) correct += 1;
+        card.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+        card.querySelector(".explanation").classList.add("show");
+      });
+
+      const percentage = Math.round((correct / state.questions.length) * 100);
+      scoreText.textContent = `${percentage}%`;
+      scoreDetail.textContent = `${correct} of ${state.questions.length} correct`;
+
+      if (percentage >= 90) {
+        resultMessage.textContent = "Excellent — interview-ready performance. Maintain practice with scenarios and project explanations.";
+      } else if (percentage >= 80) {
+        resultMessage.textContent = "Passed — review missed explanations and repeat the related hands-on labs.";
+      } else if (percentage >= 70) {
+        resultMessage.textContent = "Developing — revisit weak topics, complete the associated labs, and reattempt.";
+      } else {
+        resultMessage.textContent = "Foundation review required — study the notes, practice commands, and try again.";
+      }
+
+      submitButton.disabled = true;
+      statusLabel.textContent = autoSubmitted ? "Time expired" : "Submitted";
+      resultCard.classList.add("show");
+      resultCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    submitButton.addEventListener("click", () => submitQuiz(false));
+    reattemptButton.addEventListener("click", createAttempt);
+    createAttempt();
+  </script>
+</body>
+</html>
